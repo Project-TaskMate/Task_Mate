@@ -13,6 +13,7 @@ class _NoticePageState extends State<NoticePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      //app bar 삭제
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: 7, // 처음과 끝의 구분선 + 알림 항목 3개 + 중간 구분선 3개 = 총 7개
