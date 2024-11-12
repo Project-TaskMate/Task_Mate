@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'Login_2.dart';
-import 'Notice_1.dart'; // NoticePage를 import
+import 'Notice_1.dart'; // NoticePage를 import 함
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
