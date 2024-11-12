@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore import
 import 'Login_2.dart';
-import 'Notice_1.dart'; // NoticePage를 import 함
+import 'Notice_1.dart';
+import 'home.dart'; // HomeScreen이 정의된 파일 import
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -11,19 +13,27 @@ class LoginPage extends StatelessWidget {
     final TextEditingController _emailController = TextEditingController();
     final TextEditingController _passwordController = TextEditingController();
     final FirebaseAuth _auth = FirebaseAuth.instance;
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
     Future<void> _signIn() async {
       try {
-        // Firebase Authentication을 통한 로그인 시도
-        await _auth.signInWithEmailAndPassword(
+        // Firebase Authentication으로 로그인 시도
+        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: _emailController.text,
           password: _passwordController.text,
         );
 
-        // 로그인 성공 시 NoticePage로 이동
+        // Firestore에서 로그인된 사용자의 이름 가져오기
+        String uid = userCredential.user!.uid;
+        DocumentSnapshot userDoc = await _firestore.collection('users').doc(uid).get();
+        String userName = userDoc['name'];
+
+        // HomeScreen으로 이동하며 사용자 이름 전달
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const NoticePage()),
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(userName: userName),
+          ),
         );
       } catch (e) {
         // 로그인 실패 시 오류 메시지 표시
@@ -78,7 +88,7 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _signIn, // 로그인 버튼 클릭 시 _signIn 함수 호출
+                    onPressed: _signIn,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(

@@ -8,7 +8,6 @@ class NoticePage extends StatefulWidget {
 }
 
 class _NoticePageState extends State<NoticePage> {
-  int _currentIndex = 3; // Notice 탭이 초기 활성화 상태
   int? _selectedIndex; // 현재 선택된 알림 항목의 인덱스를 저장
 
   @override
@@ -59,24 +58,6 @@ class _NoticePageState extends State<NoticePage> {
               return _buildNotificationItem(context, itemIndex, "카카오톡", "고급모바일프로그래밍 프로젝트를 시작해보자!", "23 min");
             }
           }
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // 항상 모든 레이블 표시
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'To Do List'),
-          BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Group'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notice'),
-        ],
-        currentIndex: _currentIndex, // 현재 활성화된 탭 인덱스
-        selectedItemColor: Color(0xFF792CA7),
-        unselectedItemColor: Color(0xFF999999),
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          print("탭 $index 클릭됨");
         },
       ),
     );
