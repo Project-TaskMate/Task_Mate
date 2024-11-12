@@ -13,22 +13,6 @@ class _NoticePageState extends State<NoticePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            // 뒤로 가기 버튼 클릭 시 동작
-            Navigator.pop(context);
-          },
-        ),
-        title: Text(
-          '알림',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w400),
-        ),
-        centerTitle: true,
-      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: 7, // 처음과 끝의 구분선 + 알림 항목 3개 + 중간 구분선 3개 = 총 7개
