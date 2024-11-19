@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore import
 import 'Login_2.dart';
 import 'Notice_1.dart';
-import 'home.dart'; // HomeScreen이 정의된 파일 import
+//import 'home.dart'; // HomeScreen이 정의된 파일 import
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -104,7 +104,7 @@ class LoginPage extends StatelessWidget {
                     children: [
                       TextButton(
                         onPressed: () {
-                          // 비밀번호 찾기 기능 추가 가능
+                          //추후에 수정
                         },
                         child: const Text(
                           '비밀번호를 잊으셨나요?',
