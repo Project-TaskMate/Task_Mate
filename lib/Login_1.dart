@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore import
 import 'Login_2.dart';
 import 'Notice_1.dart';
-import 'home.dart'; // HomeScreen이 정의된 파일 import
+import 'Home.dart'; // HomeScreen이 정의된 파일 import
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
