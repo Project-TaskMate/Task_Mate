@@ -7,7 +7,6 @@ import 'Home_friend.dart'; // 친구 추가 팝업 위젯 임포트
 import 'Group_1.dart';
 import 'ToDoList.dart';
 import 'Notice_1.dart';
-import 'ToDoList.dart';
 
 class HomeScreen extends StatefulWidget {
   String userName;
