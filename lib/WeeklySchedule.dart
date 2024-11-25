@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'AddScheduleDialog.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class WeeklySchedule extends StatefulWidget {
   final DateTime initialDate;
@@ -22,10 +24,38 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
     super.initState();
     _selectedDate = widget.initialDate;
     _startOfWeek = _selectedDate.subtract(Duration(days: _selectedDate.weekday % 7));
+    _loadSchedule(); // Firebase에서 데이터를 로드
   }
 
+
+  void _loadSchedule() async {
+    String? currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUid != null) {
+      String dateKey = _selectedDate.toString().split(' ')[0];
+
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .collection('todolist')
+          .where("date", isEqualTo: _selectedDate)
+          .get();
+
+      setState(() {
+        _scheduleMap[dateKey] = querySnapshot.docs.map((doc) {
+          return {
+            "title": doc["title"],
+            "time": doc["time"],
+            "completed": doc["completed"],
+          };
+        }).toList();
+      });
+    }
+  }
+
+
   // 일정 추가 함수
-  void _addSchedule(String title, String details, String time) {
+  void _addSchedule(String title, String details, String time) async {
     setState(() {
       String dateKey = _selectedDate.toString().split(' ')[0]; // 날짜만 사용
       _scheduleMap[dateKey] ??= [];
@@ -35,15 +65,62 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
         "completed": false, // 일정 완료 상태 추가
       });
     });
-    // Firebase에 추가 로직을 넣으세요
+
+    // Firebase에서 현재 사용자 ID 가져오기
+    String? currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUid != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .collection('todolist')
+          .add({
+        "title": title,
+        "details": details,
+        "time": time,
+        "completed": false,
+        "date": _selectedDate, // 선택된 날짜 저장
+      });
+    }
   }
 
+
   // 일정 완료 상태 토글 함수
-  void _toggleCompletion(String dateKey, int index) {
+  void _toggleCompletion(String dateKey, int index) async {
     setState(() {
-      _scheduleMap[dateKey]![index]["completed"] = !_scheduleMap[dateKey]![index]["completed"];
+      _scheduleMap[dateKey]![index]["completed"] =
+      !_scheduleMap[dateKey]![index]["completed"];
     });
-    // Firebase에 상태 업데이트 로직을 넣으세요
+
+    // Firebase에서 현재 사용자 ID 가져오기
+    String? currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUid != null) {
+      String? title = _scheduleMap[dateKey]![index]["title"];
+
+      // Firestore에서 해당 일정 검색 후 상태 업데이트
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .collection('todolist')
+          .where("title", isEqualTo: title)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        String docId = querySnapshot.docs[0].id; // 해당 문서 ID 가져오기
+        bool currentCompletedState =
+        _scheduleMap[dateKey]![index]["completed"];
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .collection('todolist')
+            .doc(docId)
+            .update({
+          "completed": currentCompletedState,
+        });
+      }
+    }
   }
 
   @override
