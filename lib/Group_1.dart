@@ -9,13 +9,13 @@ class GroupPage extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 상단의 넉넉한 빈 공간
+          // 상단 빈 공간 제거 또는 최소화
           Container(
-            height: kToolbarHeight * 1.5, // AppBar 높이의 1.5배
+            height: kToolbarHeight * 0.1, // AppBar 높이의 1.5배
             color: Colors.white,
           ),
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            padding: EdgeInsets.only(left: 16.0, bottom: 8.0), // 위쪽 여백 제거
             child: Text(
               '대화 목록',
               style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
@@ -55,7 +55,6 @@ class GroupPage extends StatelessWidget {
           ),
         ],
       ),
-      backgroundColor: Colors.white,
     );
   }
 }
@@ -74,9 +73,7 @@ class ChatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFFFF0F5), // 모든 ChatItem에 연한 핑크색 배경 적용
-      child: ListTile(
+    return ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.grey[300],
           child: Icon(Icons.group, color: Colors.grey[600]),
@@ -90,7 +87,6 @@ class ChatItem extends StatelessWidget {
           time,
           style: const TextStyle(color: Colors.grey, fontSize: 12),
         ),
-      ),
-    );
+      );
   }
 }
