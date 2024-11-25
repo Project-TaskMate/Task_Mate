@@ -9,75 +9,13 @@ class GroupPage extends StatelessWidget {
 
   GroupPage({Key? key}) : super(key: key);
 
-  /// 현재 사용자 정보를 가져옵니다.
   Future<Map<String, String>> fetchCurrentUser() async {
-    try {
-      var userSnapshot =
-      await _firestore.collection('users').doc(currentUid).get();
-      return {
-        'uid': currentUid,
-        'name': userSnapshot.data()?['name'] ?? 'Unknown',
-        'email': userSnapshot.data()?['email'] ?? 'Unknown',
-      };
-    } catch (e) {
-      print("사용자 정보를 가져오는 중 오류 발생: $e");
-      return {
-        'uid': currentUid,
-        'name': 'Unknown',
-        'email': 'Unknown',
-      };
-    }
-  }
-
-  /// 친구 목록을 가져옵니다.
-  Future<List<Map<String, dynamic>>> fetchFriends() async {
-    try {
-      var snapshot = await _firestore
-          .collection('users')
-          .doc(currentUid)
-          .collection('friends')
-          .get();
-
-      return snapshot.docs.map((doc) {
-        return {
-          'uid': doc['uid'],
-          'name': doc['name'],
-          'email': doc['email'],
-        };
-      }).toList();
-    } catch (e) {
-      print("친구 목록을 가져오는 중 오류 발생: $e");
-      return [];
-    }
-  }
-
-  /// 새로운 채팅방을 생성합니다.
-  void createChatRoom(BuildContext context, Map<String, String> currentUser,
-      List<Map<String, dynamic>> selectedFriends) async {
-    try {
-      var chatRoomData = {
-        'members': [
-          currentUser,
-          ...selectedFriends,
-        ],
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      var chatRoomRef =
-      await _firestore.collection('chatrooms').add(chatRoomData);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => GroupChatRoom(chatRoomId: chatRoomRef.id),
-        ),
-      );
-    } catch (e) {
-      print("채팅방 생성 중 오류 발생: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("채팅방 생성 중 오류가 발생했습니다: $e")),
-      );
-    }
+    var userSnapshot = await _firestore.collection('users').doc(currentUid).get();
+    return {
+      'uid': currentUid,
+      'name': userSnapshot.data()?['name'] ?? 'Unknown',
+      'email': userSnapshot.data()?['email'] ?? 'Unknown',
+    };
   }
 
   @override
@@ -90,11 +28,7 @@ class GroupPage extends StatelessWidget {
             padding: EdgeInsets.only(left: 16.0, bottom: 8.0),
             child: Text(
               '대화 목록',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
@@ -112,44 +46,40 @@ class GroupPage extends StatelessWidget {
                       .where('members', arrayContains: {
                     'uid': currentUser['uid'],
                     'name': currentUser['name'],
-                    'email': currentUser['email'],
+                    'email': currentUser['email']
                   })
                       .snapshots(),
-                  builder: (context, snapshot) {
+                  builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      print("채팅방 목록 로드 오류: ${snapshot.error}");
-                      return const Center(
-                        child: Text('대화방 로드 중 오류가 발생했습니다.'),
-                      );
                     }
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return const Center(child: Text('대화방이 없습니다.'));
                     }
+
                     var chatRooms = snapshot.data!.docs;
                     return ListView.builder(
                       itemCount: chatRooms.length,
                       itemBuilder: (context, index) {
-                        var chatRoom = chatRooms[index].data();
+                        var chatRoom = chatRooms[index].data() as Map<String, dynamic>;
+
+                        // `name` 또는 `createdAt`이 null인 경우 기본값 설정
+                        String groupName = chatRoom['name'] ?? 'Unnamed Chatroom';
+                        String createdAt = (chatRoom['createdAt'] as Timestamp?)
+                            ?.toDate()
+                            .toString() ??
+                            'Unknown Time';
+
                         return ChatItem(
-                          groupName: chatRoom['members']
-                              .map((member) => member['name'])
-                              .join(', '),
+                          groupName: groupName,
                           message: '채팅 시작하기',
-                          time: chatRoom['createdAt'] != null
-                              ? (chatRoom['createdAt'] as Timestamp)
-                              .toDate()
-                              .toString()
-                              : '시간 없음',
+                          time: createdAt,
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => GroupChatRoom(
-                                  chatRoomId: chatRooms[index].id,
-                                ),
+                                builder: (context) =>
+                                    GroupChatRoom(chatRoomId: chatRooms[index].id),
                               ),
                             );
                           },
@@ -177,19 +107,21 @@ class GroupPage extends StatelessWidget {
                     title: const Text('친구 선택'),
                     content: SingleChildScrollView(
                       child: Column(
-                        children: friends.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          var friend = entry.value;
-                          return CheckboxListTile(
-                            title: Text(friend['name']),
-                            value: selected[index],
-                            onChanged: (value) {
-                              setState(() {
-                                selected[index] = value!;
-                              });
-                            },
-                          );
-                        }).toList(),
+                        children: [
+                          ...friends.asMap().entries.map((entry) {
+                            int index = entry.key;
+                            var friend = entry.value;
+                            return CheckboxListTile(
+                              title: Text(friend['name']),
+                              value: selected[index],
+                              onChanged: (value) {
+                                setState(() {
+                                  selected[index] = value!;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ],
                       ),
                     ),
                     actions: [
@@ -214,6 +146,42 @@ class GroupPage extends StatelessWidget {
           );
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchFriends() async {
+    var snapshot = await _firestore
+        .collection('users')
+        .doc(currentUid)
+        .collection('friends')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return {
+        'uid': doc['uid'],
+        'name': doc['name'],
+        'email': doc['email'],
+      };
+    }).toList();
+  }
+
+  void createChatRoom(
+      BuildContext context, Map<String, String> currentUser, List<Map<String, dynamic>> selectedFriends) async {
+    var chatRoomData = {
+      'members': [
+        currentUser,
+        ...selectedFriends
+      ],
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    var chatRoomRef = await _firestore.collection('chatrooms').add(chatRoomData);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GroupChatRoom(chatRoomId: chatRoomRef.id),
       ),
     );
   }

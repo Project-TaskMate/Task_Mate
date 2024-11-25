@@ -16,7 +16,7 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
   String chatRoomName = "채팅방 이름";
-  String currentUserName = "사용자 이름";
+  String currentUserName = "";
 
   @override
   void initState() {
@@ -26,72 +26,50 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
   }
 
   Future<void> fetchChatRoomName() async {
-    try {
-      var chatRoomSnapshot =
-      await firestore.collection('chatrooms').doc(widget.chatRoomId).get();
-      setState(() {
-        chatRoomName = chatRoomSnapshot.data()?['name'] ?? "채팅방 이름";
-      });
-    } catch (e) {
-      print("채팅방 이름 가져오기 실패: $e");
-      setState(() {
-        chatRoomName = "채팅방 이름 (오류)";
-      });
-    }
+    var chatRoomSnapshot =
+    await firestore.collection('chatrooms').doc(widget.chatRoomId).get();
+    setState(() {
+      chatRoomName = chatRoomSnapshot.data()?['name'] ?? "채팅방 이름";
+    });
   }
 
   Future<void> fetchCurrentUserName() async {
-    try {
-      var userSnapshot =
-      await firestore.collection('users').doc(currentUserUid).get();
-      setState(() {
-        currentUserName = userSnapshot.data()?['name'] ?? "사용자 이름";
-      });
-    } catch (e) {
-      print("사용자 이름 가져오기 실패: $e");
-      setState(() {
-        currentUserName = "알 수 없는 사용자";
-      });
-    }
+    var userSnapshot =
+    await firestore.collection('users').doc(currentUserUid).get();
+    setState(() {
+      currentUserName = userSnapshot.data()?['name'] ?? "사용자 이름";
+    });
   }
 
   void sendMessage(String message) {
     if (message.trim().isEmpty) return;
-
-    try {
-      firestore
-          .collection('chatrooms')
-          .doc(widget.chatRoomId)
-          .collection('messages')
-          .add({
-        'senderUid': currentUserUid,
-        'senderName': currentUserName,
-        'message': message,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      messageController.clear();
-    } catch (e) {
-      print("메시지 전송 실패: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("메시지 전송 실패: $e")),
-      );
-    }
+    firestore
+        .collection('chatrooms')
+        .doc(widget.chatRoomId)
+        .collection('messages')
+        .add({
+      'senderUid': currentUserUid,
+      'senderName': currentUserName,
+      'message': message,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    messageController.clear();
   }
 
-  void updateChatRoomName(String newName) {
-    if (newName.trim().isEmpty) return;
-
+  void updateChatRoomName(String newName) async {
     try {
-      firestore.collection('chatrooms').doc(widget.chatRoomId).update({
+      await firestore.collection('chatrooms').doc(widget.chatRoomId).update({
         'name': newName,
       });
       setState(() {
         chatRoomName = newName;
       });
-    } catch (e) {
-      print("채팅방 이름 변경 실패: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("채팅방 이름 변경 실패: $e")),
+        SnackBar(content: Text("채팅방 이름이 변경되었습니다.")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("채팅방 이름 변경 중 오류가 발생했습니다.")),
       );
     }
   }
@@ -114,7 +92,8 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                     title: const Text("채팅방 이름 변경"),
                     content: TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(hintText: "새 채팅방 이름을 입력하세요"),
+                      decoration:
+                      const InputDecoration(hintText: "새 채팅방 이름을 입력하세요"),
                     ),
                     actions: [
                       TextButton(
@@ -149,17 +128,8 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                   .orderBy('createdAt', descending: true)
                   .snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  print("메시지 스트림 오류: ${snapshot.error}");
-                  return const Center(
-                    child: Text('메시지를 가져오는 중 오류가 발생했습니다.'),
-                  );
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('메시지가 없습니다.'));
                 }
 
                 var messages = snapshot.data!.docs;
@@ -168,8 +138,7 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     var message = messages[index];
-                    bool isCurrentUser =
-                        message['senderUid'] == currentUserUid;
+                    bool isCurrentUser = message['senderUid'] == currentUserUid;
 
                     return Align(
                       alignment: isCurrentUser
@@ -190,12 +159,12 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                           children: [
                             if (!isCurrentUser)
                               Text(
-                                message['senderName'] ?? "알 수 없는 사용자",
+                                message['senderName'],
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                             Text(
-                              message['message'] ?? "",
+                              message['message'],
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -214,7 +183,8 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                 Expanded(
                   child: TextField(
                     controller: messageController,
-                    decoration: const InputDecoration(hintText: "메시지를 입력하세요"),
+                    decoration:
+                    const InputDecoration(hintText: "메시지를 입력하세요"),
                   ),
                 ),
                 IconButton(
