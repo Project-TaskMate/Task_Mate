@@ -169,7 +169,7 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                     dynamic>;
                 var members = chatRoomData['members'] as List<dynamic>;
 
-                // 멤버 이름 중복 제거
+                // 중복 제거 및 표시
                 var uniqueNames = members.map((member) => member['name'])
                     .toSet()
                     .toList();
@@ -177,14 +177,19 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                 return Text(
                   "${uniqueNames.length}명 | ${uniqueNames.join(', ')}",
                   style: const TextStyle(fontSize: 14.0, color: Colors.black),
-                  // 더 진한 색상
-                  overflow: TextOverflow.ellipsis, // 너무 길 경우 생략 표시
+                  overflow: TextOverflow.ellipsis,
                 );
               },
             ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              leaveChatRoom(context); // 나가기 로직 호출
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.group_add),
             onPressed: () {
@@ -203,8 +208,8 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                     title: const Text("채팅방 이름 변경"),
                     content: TextField(
                       controller: nameController,
-                      decoration:
-                      const InputDecoration(hintText: "새 채팅방 이름을 입력하세요"),
+                      decoration: const InputDecoration(
+                          hintText: "새 채팅방 이름을 입력하세요"),
                     ),
                     actions: [
                       TextButton(
@@ -316,5 +321,29 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
         ],
       ),
     );
+  }
+
+  void leaveChatRoom(BuildContext context) async {
+    try {
+      // 채팅방에서 현재 유저 제거
+      var chatRoomRef = firestore.collection('chatrooms').doc(
+          widget.chatRoomId);
+      var chatRoomSnapshot = await chatRoomRef.get();
+      var chatRoomData = chatRoomSnapshot.data() as Map<String, dynamic>;
+      var updatedMembers = (chatRoomData['members'] as List<dynamic>)
+          .where((member) => member['uid'] != currentUserUid)
+          .toList();
+
+      // 업데이트된 멤버 리스트로 Firestore 업데이트
+      await chatRoomRef.update({'members': updatedMembers});
+
+      // 알림 메시지 추가
+      sendMessage("$currentUserName 님이 채팅방에서 나갔습니다.");
+
+      // 사용자 채팅방 목록에서 제거
+      Navigator.pop(context); // 채팅방 화면 종료
+    } catch (e) {
+      print("Error leaving chatroom: $e");
+    }
   }
 }
