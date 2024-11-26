@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:math'; // Random 사용
 import 'Home_table.dart'; // AddTimetablePopup 임포트
 import 'Home_user.dart'; // 사용자 정보 변경 위젯 임포트
 import 'Home_friend.dart'; // 친구 추가 팝업 위젯 임포트
 import 'Group_1.dart';
 import 'ToDoList.dart';
 import 'Notice_1.dart';
+import 'Home_edit.dart';
+
 
 class HomeScreen extends StatefulWidget {
   String userName;
@@ -23,55 +24,95 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> timetableEntries = [];
   Map<String, Color> subjectColors = {}; // 과목별 색상 저장
   int _currentIndex = 0;
-  String searchText = '';
 
-  Color _generateRandomColor() {
-    Random random = Random();
-    return Color.fromRGBO(
-      random.nextInt(256),
-      random.nextInt(256),
-      random.nextInt(256),
-      1,
-    );
+
+  bool _isWithinTimeRange(String day, int hour, Map<String, dynamic> entry) {
+    if (entry['dayOfWeek'] != day) return false;
+    int startHour = entry['startTime'].hour;
+    int endHour = entry['endTime'].hour;
+    return hour >= startHour && hour < endHour;
+  }
+
+  Color _getDarkerShade(Color color) {
+    int red = (color.red * 0.7).toInt();
+    int green = (color.green * 0.7).toInt();
+    int blue = (color.blue * 0.7).toInt();
+    return Color.fromARGB(color.alpha, red, green, blue);
   }
 
   void _addTimetableEntry(String className, String classroom, String dayOfWeek,
-      TimeOfDay startTime, TimeOfDay endTime) async {
+      TimeOfDay startTime, TimeOfDay endTime, Color color) async {
     String uid = _auth.currentUser!.uid;
-    var docRef = await FirebaseFirestore.instance
+
+    try {
+      var docRef = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('timetable')
+          .add({
+        'className': className,
+        'classroom': classroom,
+        'dayOfWeek': dayOfWeek,
+        'startTime': '${startTime.hour}:${startTime.minute}',
+        'endTime': '${endTime.hour}:${endTime.minute}',
+        'color': color.value.toRadixString(16),
+      });
+
+      setState(() {
+        timetableEntries.add({
+          'id': docRef.id,
+          'className': className,
+          'classroom': classroom,
+          'dayOfWeek': dayOfWeek,
+          'startTime': startTime,
+          'endTime': endTime,
+          'color': color,
+        });
+        subjectColors[className] = color;
+      });
+    } catch (e) {
+      print('Failed to add entry: $e');
+    }
+  }
+
+
+  void _updateTimetableEntry(String id, String className, String classroom,
+      String dayOfWeek, TimeOfDay startTime, TimeOfDay endTime, Color color) async {
+    String uid = _auth.currentUser!.uid;
+
+    await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('timetable')
-        .add({
+        .doc(id)
+        .update({
       'className': className,
       'classroom': classroom,
       'dayOfWeek': dayOfWeek,
       'startTime': '${startTime.hour}:${startTime.minute}',
       'endTime': '${endTime.hour}:${endTime.minute}',
+      'color': color.value.toRadixString(16), // 색상 저장
     });
 
-    // 과목별 색상 추가
-    if (!subjectColors.containsKey(className)) {
-      subjectColors[className] = _generateRandomColor();
-    }
-
-    // 로컬 데이터 업데이트
     setState(() {
-      timetableEntries.add({
-        'id': docRef.id,
-        'className': className,
-        'classroom': classroom,
-        'dayOfWeek': dayOfWeek,
-        'startTime': startTime,
-        'endTime': endTime,
-      });
+      var index = timetableEntries.indexWhere((entry) => entry['id'] == id);
+      if (index != -1) {
+        timetableEntries[index] = {
+          'id': id,
+          'className': className,
+          'classroom': classroom,
+          'dayOfWeek': dayOfWeek,
+          'startTime': startTime,
+          'endTime': endTime,
+          'color': color,
+        };
+      }
     });
   }
 
   void _deleteTimetableEntry(String id) async {
     String uid = _auth.currentUser!.uid;
 
-    // Firebase에서 삭제
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
@@ -79,7 +120,6 @@ class _HomeScreenState extends State<HomeScreen> {
         .doc(id)
         .delete();
 
-    // 로컬 데이터 업데이트
     setState(() {
       timetableEntries.removeWhere((entry) => entry['id'] == id);
     });
@@ -93,45 +133,73 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadTimetableFromFirebase() async {
     String uid = _auth.currentUser!.uid;
-    var snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('timetable')
-        .get();
 
-    setState(() {
-      timetableEntries = snapshot.docs.map((doc) {
+    try {
+      // Firebase 데이터 가져오기
+      var snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('timetable')
+          .get();
+
+      List<Map<String, dynamic>> loadedEntries = snapshot.docs.map((doc) {
         var data = doc.data();
 
-        // 과목별 색상 추가
-        String className = data['className'];
-        if (!subjectColors.containsKey(className)) {
-          subjectColors[className] = _generateRandomColor();
-        }
+        // 색상 파싱
+        Color color = Color(int.parse(data['color'], radix: 16));
+
+        // 시간 파싱
+        TimeOfDay startTime = TimeOfDay(
+          hour: int.parse(data['startTime'].split(':')[0]),
+          minute: int.parse(data['startTime'].split(':')[1]),
+        );
+
+        TimeOfDay endTime = TimeOfDay(
+          hour: int.parse(data['endTime'].split(':')[0]),
+          minute: int.parse(data['endTime'].split(':')[1]),
+        );
 
         return {
           'id': doc.id,
-          'className': className,
+          'className': data['className'],
           'classroom': data['classroom'],
           'dayOfWeek': data['dayOfWeek'],
-          'startTime': TimeOfDay(
-            hour: int.parse(data['startTime'].split(':')[0]),
-            minute: int.parse(data['startTime'].split(':')[1]),
-          ),
-          'endTime': TimeOfDay(
-            hour: int.parse(data['endTime'].split(':')[0]),
-            minute: int.parse(data['endTime'].split(':')[1]),
-          ),
+          'startTime': startTime,
+          'endTime': endTime,
+          'color': color,
         };
       }).toList();
-    });
+
+      setState(() {
+        timetableEntries = loadedEntries;
+
+        // 과목별 색상 저장
+        for (var entry in loadedEntries) {
+          if (!subjectColors.containsKey(entry['className'])) {
+            subjectColors[entry['className']] = entry['color'];
+          }
+        }
+      });
+    } catch (e) {
+      // 에러 처리
+      print('Failed to load timetable: $e');
+    }
   }
 
-  bool _isWithinTimeRange(String day, int hour, Map<String, dynamic> entry) {
-    if (entry['dayOfWeek'] != day) return false;
-    int startHour = entry['startTime'].hour;
-    int endHour = entry['endTime'].hour;
-    return hour >= startHour && hour < endHour;
+  void _showEditDeleteDialog(Map<String, dynamic> entry) {
+    showDialog(
+      context: context,
+      builder: (context) => EditDeletePopup(
+        entry: entry,
+        onUpdate: (className, classroom, dayOfWeek, startTime, endTime, color) {
+          _updateTimetableEntry(
+              entry['id'], className, classroom, dayOfWeek, startTime, endTime, color);
+        },
+        onDelete: () {
+          _deleteTimetableEntry(entry['id']);
+        },
+      ),
+    );
   }
 
   @override
@@ -142,12 +210,12 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         title: Text(
           _currentIndex == 0
-              ? '홈'
+              ? 'Home'
               : _currentIndex == 1
               ? 'To Do List'
               : _currentIndex == 2
               ? 'Group'
-              : '알람',
+              : 'Notice',
           style: TextStyle(color: Colors.black),
         ),
         actions: [
@@ -233,8 +301,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         showDialog(
                           context: context,
                           builder: (context) => AddTimetablePopup(
-                            onAddEntry: (className, classroom, dayOfWeek, startTime, endTime) {
-                              _addTimetableEntry(className, classroom, dayOfWeek, startTime, endTime);
+                            onAddEntry: (className, classroom, dayOfWeek,
+                                startTime, endTime, color) {
+                              _addTimetableEntry(
+                                  className, classroom, dayOfWeek, startTime, endTime, color);
                             },
                           ),
                         );
@@ -280,11 +350,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 if (entry.isNotEmpty) {
                                   return GestureDetector(
                                     onTap: () {
-                                      _showDeleteDialog(entry);
+                                      _showEditDeleteDialog(entry);
                                     },
                                     child: Container(
                                       height: 45.0,
-                                      color: subjectColors[entry['className']]!.withOpacity(0.2),
+                                      color: entry['color'].withOpacity(0.2),
                                       child: Center(
                                         child: entry['startTime'].hour == hour
                                             ? Column(
@@ -293,13 +363,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                             Text(
                                               entry['className'],
                                               style: TextStyle(
-                                                  color: subjectColors[entry['className']],
-                                                  fontWeight: FontWeight.bold),
+                                                color: _getDarkerShade(entry['color']),
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                             Text(
                                               entry['classroom'],
                                               style: TextStyle(
-                                                  color: subjectColors[entry['className']]),
+                                                color: _getDarkerShade(entry['color']),
+                                              ),
                                             ),
                                           ],
                                         )
@@ -320,17 +392,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 SizedBox(height: 16),
-                TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      searchText = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: '검색어를 입력하세요',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.search),
-                    suffixIcon: IconButton(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    IconButton(
                       icon: Icon(Icons.person_add),
                       onPressed: () {
                         showDialog(
@@ -340,33 +405,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       tooltip: '친구 추가',
                     ),
-                  ),
+                    Text(
+                      '친구를 추가하세요!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteDialog(Map<String, dynamic> entry) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('삭제 확인'),
-        content: Text('정말로 "${entry['className']}" 과목을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              _deleteTimetableEntry(entry['id']);
-              Navigator.pop(context);
-            },
-            child: Text('삭제'),
           ),
         ],
       ),
