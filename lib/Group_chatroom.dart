@@ -295,7 +295,7 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                         padding: const EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
                           color: isCurrentUser
-                              ? Colors.blue[200]
+                              ? Colors.purple[100]
                               : Colors.grey[300],
                           borderRadius: BorderRadius.circular(10.0),
                         ),
