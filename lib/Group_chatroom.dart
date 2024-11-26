@@ -185,19 +185,42 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              leaveChatRoom(context); // 나가기 로직 호출
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.group_add),
+            icon: const Icon(Icons.group_add), // 친구 초대 아이콘
             onPressed: () {
               addFriendToChatRoom(context);
             },
           ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.logout), // 나가기 아이콘
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("채팅방 나가기"),
+                    content: Text("‘$chatRoomName’ 채팅방을 나가시겠습니까?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // 팝업 닫기
+                        },
+                        child: const Text("취소"),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(context); // 팝업 닫기
+                          await leaveChatRoom(context); // 나가기 함수 호출
+                        },
+                        child: const Text("확인"),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings), // 설정 아이콘
             onPressed: () {
               showDialog(
                 context: context,
@@ -323,11 +346,10 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
     );
   }
 
-  void leaveChatRoom(BuildContext context) async {
+  Future<void> leaveChatRoom(BuildContext context) async {
     try {
       // 채팅방에서 현재 유저 제거
-      var chatRoomRef = firestore.collection('chatrooms').doc(
-          widget.chatRoomId);
+      var chatRoomRef = firestore.collection('chatrooms').doc(widget.chatRoomId);
       var chatRoomSnapshot = await chatRoomRef.get();
       var chatRoomData = chatRoomSnapshot.data() as Map<String, dynamic>;
       var updatedMembers = (chatRoomData['members'] as List<dynamic>)
