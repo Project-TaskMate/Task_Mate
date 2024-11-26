@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
 
-class AddTimetablePopup extends StatefulWidget {
-  final Function(String, String, String, TimeOfDay, TimeOfDay, Color) onAddEntry;
+class EditDeletePopup extends StatefulWidget {
+  final Map<String, dynamic> entry;
+  final Function(String, String, String, TimeOfDay, TimeOfDay, Color) onUpdate;
+  final Function onDelete;
 
-  const AddTimetablePopup({super.key, required this.onAddEntry});
+  const EditDeletePopup({
+    super.key,
+    required this.entry,
+    required this.onUpdate,
+    required this.onDelete,
+  });
 
   @override
-  _AddTimetablePopupState createState() => _AddTimetablePopupState();
+  _EditDeletePopupState createState() => _EditDeletePopupState();
 }
 
-class _AddTimetablePopupState extends State<AddTimetablePopup> {
-  String className = '';
-  String classroom = '';
-  String dayOfWeek = '월';
+class _EditDeletePopupState extends State<EditDeletePopup> {
+  late String className;
+  late String classroom;
+  late String dayOfWeek;
   TimeOfDay? startTime;
   TimeOfDay? endTime;
-  Color selectedColor = Colors.pink[300]!; // 기본 색상
+  late Color selectedColor;
 
-  // 사용자 정의 파스텔톤 색상 목록
   final List<Color> availableColors = [
     Colors.pink[300]!,     // 분홍
     Colors.orange[300]!,   // 주황
@@ -27,20 +33,39 @@ class _AddTimetablePopupState extends State<AddTimetablePopup> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    className = widget.entry['className'];
+    classroom = widget.entry['classroom'];
+    dayOfWeek = widget.entry['dayOfWeek'];
+    startTime = widget.entry['startTime'];
+    endTime = widget.entry['endTime'];
+    selectedColor = widget.entry['color']; // 기존 저장된 색상 로드
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('시간표 추가'),
+      title: Text('수정 / 삭제'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               onChanged: (value) => className = value,
-              decoration: InputDecoration(labelText: '수업명'),
+              decoration: InputDecoration(
+                labelText: '수업명',
+                hintText: widget.entry['className'],
+              ),
+              controller: TextEditingController(text: className),
             ),
             TextField(
               onChanged: (value) => classroom = value,
-              decoration: InputDecoration(labelText: '교실'),
+              decoration: InputDecoration(
+                labelText: '교실',
+                hintText: widget.entry['classroom'],
+              ),
+              controller: TextEditingController(text: classroom),
             ),
             DropdownButtonFormField<String>(
               value: dayOfWeek,
@@ -64,7 +89,7 @@ class _AddTimetablePopupState extends State<AddTimetablePopup> {
                     onPressed: () async {
                       startTime = await showTimePicker(
                         context: context,
-                        initialTime: TimeOfDay.now(),
+                        initialTime: startTime ?? TimeOfDay.now(),
                       );
                       setState(() {});
                     },
@@ -78,7 +103,7 @@ class _AddTimetablePopupState extends State<AddTimetablePopup> {
                     onPressed: () async {
                       endTime = await showTimePicker(
                         context: context,
-                        initialTime: TimeOfDay.now(),
+                        initialTime: endTime ?? TimeOfDay.now(),
                       );
                       setState(() {});
                     },
@@ -117,7 +142,6 @@ class _AddTimetablePopupState extends State<AddTimetablePopup> {
                 );
               }).toList(),
             )
-
           ],
         ),
       ),
@@ -126,7 +150,7 @@ class _AddTimetablePopupState extends State<AddTimetablePopup> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: Text('닫기'),
+          child: Text('취소'),
         ),
         TextButton(
           onPressed: () {
@@ -134,18 +158,25 @@ class _AddTimetablePopupState extends State<AddTimetablePopup> {
                 classroom.isNotEmpty &&
                 startTime != null &&
                 endTime != null) {
-              widget.onAddEntry(
+              widget.onUpdate(
                 className,
                 classroom,
                 dayOfWeek,
                 startTime!,
                 endTime!,
-                selectedColor,
+                selectedColor, // 선택한 색상 전달
               );
               Navigator.pop(context);
             }
           },
-          child: Text('추가'),
+          child: Text('수정'),
+        ),
+        TextButton(
+          onPressed: () {
+            widget.onDelete();
+            Navigator.pop(context);
+          },
+          child: Text('삭제'),
         ),
       ],
     );
