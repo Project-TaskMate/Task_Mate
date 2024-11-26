@@ -13,6 +13,7 @@ class HomeScreen extends StatefulWidget {
   String userName;
 
   HomeScreen({super.key, required this.userName});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -66,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     });
   }
+
   void _deleteTimetableEntry(String id) async {
     String uid = _auth.currentUser!.uid;
 
@@ -124,12 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
       }).toList();
     });
   }
+
   bool _isWithinTimeRange(String day, int hour, Map<String, dynamic> entry) {
     if (entry['dayOfWeek'] != day) return false;
     int startHour = entry['startTime'].hour;
     int endHour = entry['endTime'].hour;
     return hour >= startHour && hour < endHour;
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,6 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   Widget _buildBody() {
     switch (_currentIndex) {
       case 0:
