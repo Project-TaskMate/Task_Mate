@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'AddScheduleDialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'EditScheduleDialog.dart';
 
 class WeeklySchedule extends StatefulWidget {
   final DateTime initialDate;
@@ -27,7 +28,6 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
     _loadSchedule(); // Firebase에서 데이터를 로드
   }
 
-
   void _loadSchedule() async {
     String? currentUid = FirebaseAuth.instance.currentUser?.uid;
 
@@ -52,7 +52,6 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
       });
     }
   }
-
 
   // 일정 추가 함수
   void _addSchedule(String title, String details, String time) async {
@@ -83,7 +82,6 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
       });
     }
   }
-
 
   // 일정 완료 상태 토글 함수
   void _toggleCompletion(String dateKey, int index) async {
@@ -123,6 +121,98 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
     }
   }
 
+  // 수정/삭제 팝업 호출
+  void _showEditDeleteDialog(String dateKey, int index) {
+    final event = _scheduleMap[dateKey]![index];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return EditScheduleDialog(
+          event: event,
+          onEdit: (newTitle, newTime) {
+            _editSchedule(dateKey, index, newTitle, newTime);
+          },
+          onDelete: () {
+            _deleteSchedule(dateKey, index);
+          },
+        );
+      },
+    );
+  }
+
+  void _editSchedule(String dateKey, int index, String newTitle, String newTime) async {
+    String? currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUid != null) {
+      // 기존 문서 ID 가져오기
+      String? title = _scheduleMap[dateKey]![index]['title'];
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .collection('todolist')
+          .where("title", isEqualTo: title)
+          .where("date", isEqualTo: _selectedDate)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        String docId = querySnapshot.docs[0].id;
+
+        // Firebase에 업데이트
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .collection('todolist')
+            .doc(docId)
+            .update({
+          "title": newTitle,
+          "time": newTime,
+        });
+
+        // 로컬 상태 업데이트
+        setState(() {
+          _scheduleMap[dateKey]![index]['title'] = newTitle;
+          _scheduleMap[dateKey]![index]['time'] = newTime;
+        });
+      }
+    }
+  }
+
+
+  // 일정 삭제 함수
+  void _deleteSchedule(String dateKey, int index) async {
+    String? currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUid != null) {
+      String? title = _scheduleMap[dateKey]![index]['title'];
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .collection('todolist')
+          .where("title", isEqualTo: title)
+          .where("date", isEqualTo: _selectedDate)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        String docId = querySnapshot.docs[0].id;
+
+        // Firebase에서 삭제
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .collection('todolist')
+            .doc(docId)
+            .delete();
+
+        // 로컬 상태 업데이트
+        setState(() {
+          _scheduleMap[dateKey]!.removeAt(index);
+        });
+      }
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     String dateKey = _selectedDate.toString().split(' ')[0];
@@ -156,7 +246,6 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
       ),
       body: Column(
         children: [
-          // 주간 날짜 표시 (스크롤 가능)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -203,7 +292,6 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
             ),
           ),
           SizedBox(height: 16),
-          // 일정 목록 표시
           Expanded(
             child: ListView(
               children: (_scheduleMap[dateKey] ?? []).asMap().entries.map((entry) {
@@ -227,6 +315,7 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
                     ),
                     onPressed: () => _toggleCompletion(dateKey, index),
                   ),
+                  onTap: () => _showEditDeleteDialog(dateKey, index),
                 );
               }).toList(),
             ),
@@ -236,5 +325,3 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
     );
   }
 }
-
-
