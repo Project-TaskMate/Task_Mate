@@ -56,22 +56,87 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
     messageController.clear();
   }
 
-  void updateChatRoomName(String newName) async {
-    try {
-      await firestore.collection('chatrooms').doc(widget.chatRoomId).update({
-        'name': newName,
-      });
-      setState(() {
-        chatRoomName = newName;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("채팅방 이름이 변경되었습니다.")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("채팅방 이름 변경 중 오류가 발생했습니다.")),
-      );
-    }
+  void addFriendToChatRoom(BuildContext context) async {
+    var currentUserSnapshot =
+    await firestore.collection('users').doc(currentUserUid).get();
+    var currentUserName = currentUserSnapshot.data()?['name'] ?? "Unknown";
+    var friendsSnapshot = await firestore
+        .collection('users')
+        .doc(currentUserUid)
+        .collection('friends')
+        .get();
+
+    List<Map<String, dynamic>> friends = friendsSnapshot.docs
+        .map((doc) => {
+      'uid': doc['uid'],
+      'name': doc['name'],
+      'email': doc['email'],
+    })
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        List<bool> selected = List.filled(friends.length, false);
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("친구 추가"),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: friends.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    var friend = entry.value;
+                    return CheckboxListTile(
+                      title: Text(friend['name']),
+                      value: selected[index],
+                      onChanged: (value) {
+                        setState(() {
+                          selected[index] = value!;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("취소"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    var selectedFriends = friends
+                        .asMap()
+                        .entries
+                        .where((entry) => selected[entry.key])
+                        .map((entry) => entry.value)
+                        .toList();
+
+                    // 채팅방 멤버 업데이트
+                    var chatRoomRef =
+                    firestore.collection('chatrooms').doc(widget.chatRoomId);
+                    await chatRoomRef.update({
+                      'members': FieldValue.arrayUnion(selectedFriends),
+                    });
+
+                    // 채팅 대화창에 알림 메시지 추가
+                    for (var friend in selectedFriends) {
+                      sendMessage("${friend['name']} 님이 채팅방에 초대되었습니다.");
+                    }
+
+                    Navigator.pop(context);
+                  },
+                  child: const Text("확인"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -80,6 +145,12 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
       appBar: AppBar(
         title: Text(chatRoomName),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.group_add),
+            onPressed: () {
+              addFriendToChatRoom(context);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
@@ -103,8 +174,14 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
                         child: const Text("취소"),
                       ),
                       TextButton(
-                        onPressed: () {
-                          updateChatRoomName(nameController.text.trim());
+                        onPressed: () async {
+                          await firestore
+                              .collection('chatrooms')
+                              .doc(widget.chatRoomId)
+                              .update({'name': nameController.text.trim()});
+                          setState(() {
+                            chatRoomName = nameController.text.trim();
+                          });
                           Navigator.pop(context);
                         },
                         child: const Text("확인"),
