@@ -42,7 +42,9 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
   }
 
   void sendMessage(String message) {
-    if (message.trim().isEmpty) return;
+    if (message
+        .trim()
+        .isEmpty) return;
     firestore
         .collection('chatrooms')
         .doc(widget.chatRoomId)
@@ -67,7 +69,8 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
         .get();
 
     List<Map<String, dynamic>> friends = friendsSnapshot.docs
-        .map((doc) => {
+        .map((doc) =>
+    {
       'uid': doc['uid'],
       'name': doc['name'],
       'email': doc['email'],
@@ -84,7 +87,10 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
               title: const Text("친구 추가"),
               content: SingleChildScrollView(
                 child: Column(
-                  children: friends.asMap().entries.map((entry) {
+                  children: friends
+                      .asMap()
+                      .entries
+                      .map((entry) {
                     int index = entry.key;
                     var friend = entry.value;
                     return CheckboxListTile(
@@ -143,7 +149,41 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(chatRoomName),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(chatRoomName, style: const TextStyle(fontSize: 18.0)),
+            FutureBuilder<DocumentSnapshot>(
+              future: firestore.collection('chatrooms')
+                  .doc(widget.chatRoomId)
+                  .get(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Text(
+                    "로딩 중...",
+                    style: TextStyle(fontSize: 12.0, color: Colors.grey[600]),
+                  );
+                }
+
+                var chatRoomData = snapshot.data!.data() as Map<String,
+                    dynamic>;
+                var members = chatRoomData['members'] as List<dynamic>;
+
+                // 멤버 이름 중복 제거
+                var uniqueNames = members.map((member) => member['name'])
+                    .toSet()
+                    .toList();
+
+                return Text(
+                  "${uniqueNames.length}명 | ${uniqueNames.join(', ')}",
+                  style: const TextStyle(fontSize: 14.0, color: Colors.black),
+                  // 더 진한 색상
+                  overflow: TextOverflow.ellipsis, // 너무 길 경우 생략 표시
+                );
+              },
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.group_add),
