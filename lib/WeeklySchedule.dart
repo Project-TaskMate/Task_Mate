@@ -123,7 +123,6 @@ class _WeeklyScheduleState extends State<WeeklySchedule> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     String dateKey = _selectedDate.toString().split(' ')[0];

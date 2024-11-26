@@ -3,6 +3,7 @@ import 'WeeklySchedule.dart'; // 주간 일정 위젯을 import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+
 void main() {
   runApp(MyApp());
 }
