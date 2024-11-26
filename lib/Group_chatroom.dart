@@ -130,7 +130,7 @@ class _GroupChatRoomState extends State<GroupChatRoom> {
 
                     // 채팅 대화창에 알림 메시지 추가
                     for (var friend in selectedFriends) {
-                      sendMessage("${friend['name']} 님이 채팅방에 초대되었습니다.");
+                      sendMessage("${friend['name']} 님을 채팅방에 초대했습니다.");
                     }
 
                     Navigator.pop(context);
