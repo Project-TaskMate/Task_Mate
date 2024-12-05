@@ -19,30 +19,13 @@ TaskMate는 사용자의 시간표와 캘린더를 통합하여 스마트하게 
 
 ## 📸 **화면 소개**
 
-| **화면 이름**       | **이미지**                                                                                       | **설명**                                                                                  |
-|--------------------|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
-| **Login 페이지**    | ![image](https://github.com/user-attachments/assets/2f2fda4f-5adf-419c-9ab9-0e92bcd5f35a)
-                                                              | 사용자 로그인 및 회원가입 기능을 제공. 이메일과 비밀번호를 입력하여 인증 가능.           |
-| **Home 페이지**     | ![image](https://github.com/user-attachments/assets/1d8f8cce-6cad-424b-89bb-7dac94c4e679)
-                                                                 | 사용자 정보 수정, 친구 추가, 시간표 추가/수정/삭제 기능 제공.                           |
-| **ToDoList 페이지** | ![image](https://github.com/user-attachments/assets/119f6c8b-992d-47c6-826b-faf0b1544bbe)
-                                                        | 날짜별 할 일을 관리하고 캘린더와 연동. 작업 추가, 수정 및 삭제 가능.                   |
-| **Group 페이지**    |![image](https://github.com/user-attachments/assets/308e1573-bcf1-42d7-8d28-ab6526a9e196)
-                                                             | 그룹 생성, 멤버 추가/삭제, 실시간 채팅 지원. 협업을 위한 기능 제공.                     |
-| **Notice 페이지**   | ![image](https://github.com/user-attachments/assets/4af5b370-23b7-40d7-846a-2f86c614e4e1)
-  
-
-
-
-
-
-
-
-
-
-
-
-
+| **화면 이름**       | **이미지**                              | **설명**                                                                                  |
+|--------------------|-----------------------------------------|------------------------------------------------------------------------------------------|
+| **Login 페이지**    | <img src="https://your-image-url-here" width="150"> | 사용자 로그인 및 회원가입 기능을 제공. 이메일과 비밀번호를 입력하여 인증 가능.           |
+| **Home 페이지**     | <img src="https://your-image-url-here" width="150"> | 사용자 정보 수정, 친구 추가, 시간표 추가/수정/삭제 기능 제공.                           |
+| **ToDoList 페이지** | <img src="https://your-image-url-here" width="150"> | 날짜별 할 일을 관리하고 캘린더와 연동. 작업 추가, 수정 및 삭제 가능.                   |
+| **Group 페이지**    | <img src="https://your-image-url-here" width="150"> | 그룹 생성, 멤버 추가/삭제, 실시간 채팅 지원. 협업을 위한 기능 제공.                     |
+| **Notice 페이지**   | <img src="https://your-image-url-here" width="150"> | 사용자 등록 시간표와 캘린더의 공지사항 확인 가능.                                       |
 
 
 
