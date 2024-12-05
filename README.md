@@ -1,5 +1,11 @@
 # 🌟 TaskMate
 
+## ✨ **팀원**
+- 정가을
+- 오승민
+- 조민서
+- 강윤지
+
 ![Flutter](https://img.shields.io/badge/Flutter-Framework-blue?style=flat-square&logo=flutter)
 ![Firebase](https://img.shields.io/badge/Firebase-Backend-orange?style=flat-square&logo=firebase)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)
