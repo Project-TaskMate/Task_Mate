@@ -21,11 +21,18 @@ TaskMate는 사용자의 시간표와 캘린더를 통합하여 스마트하게 
 
 | **화면 이름**       | **이미지**                              | **설명**                                                                                  |
 |--------------------|-----------------------------------------|------------------------------------------------------------------------------------------|
-| **Login 페이지**    | <img src="https://your-image-url-here" width="150"> | 사용자 로그인 및 회원가입 기능을 제공. 이메일과 비밀번호를 입력하여 인증 가능.           |
-| **Home 페이지**     | <img src="https://your-image-url-here" width="150"> | 사용자 정보 수정, 친구 추가, 시간표 추가/수정/삭제 기능 제공.                           |
-| **ToDoList 페이지** | <img src="https://your-image-url-here" width="150"> | 날짜별 할 일을 관리하고 캘린더와 연동. 작업 추가, 수정 및 삭제 가능.                   |
-| **Group 페이지**    | <img src="https://your-image-url-here" width="150"> | 그룹 생성, 멤버 추가/삭제, 실시간 채팅 지원. 협업을 위한 기능 제공.                     |
-| **Notice 페이지**   | <img src="https://your-image-url-here" width="150"> | 사용자 등록 시간표와 캘린더의 공지사항 확인 가능.                                       |
+| **Login 페이지**    | <img src="https://github.com/user-attachments/assets/0a1ecd92-ae9b-403c-9847-f384a9c65ec0" width="150">
+ | 사용자 로그인 및 회원가입 기능을 제공. 이메일과 비밀번호를 입력하여 인증 가능.           |
+| **Home 페이지**     | <img src="![image](https://github.com/user-attachments/assets/be48ed03-daeb-4c31-aeb2-40532941ef98)" width="150">
+" width="150"> | 사용자 정보 수정, 친구 추가, 시간표 추가/수정/삭제 기능 제공.                           |
+| **ToDoList 페이지** | <img src="![image](https://github.com/user-attachments/assets/99c84883-be46-4735-aa80-684a5cf00f71)" width="150">
+" width="150"> | 날짜별 할 일을 관리하고 캘린더와 연동. 작업 추가, 수정 및 삭제 가능.                   |
+| **Group 페이지**    | <img src="![image](https://github.com/user-attachments/assets/47704e5e-11e9-4cd0-96f8-b5a1966919f2)" width="150">
+" width="150"> | 그룹 생성, 멤버 추가/삭제, 실시간 채팅 지원. 협업을 위한 기능 제공.                     |
+| **Notice 페이지**   | <img src="![image](https://github.com/user-attachments/assets/c8e392e3-e624-4409-9ee8-348f97b81f39)" width="150">
+" width="150"> | 사용자 등록 시간표와 캘린더의 공지사항 확인 가능.                                       |
+
+
 
 
 
