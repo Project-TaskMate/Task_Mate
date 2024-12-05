@@ -94,3 +94,8 @@ TaskMate는 사용자의 시간표와 캘린더를 통합하여 스마트하게 
   - Firebase Authentication: 사용자 인증 및 세션 관리
 
 ---
+
+### 발표/시연 영상 주소
+https://youtu.be/Tg3I4zoy9uU
+
+---
